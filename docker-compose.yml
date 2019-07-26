@@ -1,0 +1,47 @@
+version: '3'
+services:
+  redis:
+    image: redis
+  consumer1:
+    image: python:3.7
+    links:
+      - redis
+    depends_on:
+      - redis
+      - producer1
+    entrypoint: ["bash", "/app/entrypoint.sh"]
+    command: ["python", "/app/app.py", "--role", "consumer", "--channels", "apps", "--name", "apps consumer"]
+    volumes:
+      - .:/app
+  producer1:
+    image: python:3.7
+    links:
+      - redis
+    depends_on:
+      - redis
+    entrypoint: ["bash", "/app/entrypoint.sh"]
+    command: ["python", "/app/app.py", "--role", "producer", "--channels", "apps", "--name", "apps producer"]
+    volumes:
+      - .:/app
+  consumer2:
+    image: python:3.7
+    links:
+      - redis
+    depends_on:
+      - redis
+      - producer1
+      - producer2
+    entrypoint: ["bash", "/app/entrypoint.sh"]
+    command: ["python", "/app/app.py", "--role", "consumer", "--channels", "apps,teams", "--name", "teams consumer"]
+    volumes:
+      - .:/app
+  producer2:
+    image: python:3.7
+    links:
+      - redis
+    depends_on:
+      - redis
+    entrypoint: ["bash", "/app/entrypoint.sh"]
+    command: ["python", "/app/app.py", "--role", "producer", "--channels", "teams", "--name", "teams producer"]
+    volumes:
+      - .:/app
