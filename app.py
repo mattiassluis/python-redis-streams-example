@@ -5,7 +5,7 @@ from random import randint
 import aioredis
 
 
-async def consumer(loop, channels=None, name=None):
+async def consumer(loop, channels, name):
     await asyncio.sleep(randint(1, 60)/10)
     print(f'Started consumer {name}', flush=True)
     redis = await aioredis.create_redis('redis://redis', loop=loop)
@@ -32,12 +32,14 @@ async def consumer(loop, channels=None, name=None):
             events[channel]['last'] = item[1]
 
 
-async def producer(loop, channel=None, name=None):
-    print(f'Started producer {name}', flush=True)
+async def producer(loop, channel, name):
     i = 0
     redis = await aioredis.create_redis('redis://redis', loop=loop)
     while True:
-        fields = {b'name': name.encode(), b'time': str(i).encode()}
+        fields = {
+            b'name': name.encode(),
+            b'sequence_number': str(i).encode()
+        }
         print(f'{name}[{channel}]: {i}', flush=True)
         i += 1
         await redis.xadd(channel, fields)
@@ -59,7 +61,7 @@ def _parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--role', help='Role', default='consumer')
     parser.add_argument('--channels', help='Channels', default='default')
-    parser.add_argument('--name', help='Name')
+    parser.add_argument('--name', help='Name', default='name')
     return parser.parse_args()
 
 
